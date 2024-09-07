@@ -1,0 +1,470 @@
+<html><head><base href="https://websim.ai/projects/addition-subtraction-quiz-generator"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Math Quiz Generator</title><script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script><style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial', sans-serif;
+        background-color: #f0f4f8;
+        color: #333;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    .radio-group, .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .radio-option, .checkbox-option {
+        display: flex;
+        align-items: center;
+    }
+    input[type="radio"], input[type="checkbox"] {
+        margin-right: 5px;
+    }
+    button {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        background-color: #3498db;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-bottom: 10px;
+    }
+    button:hover {
+        background-color: #2980b9;
+    }
+    .quiz {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .question {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #ecf0f1;
+        border-radius: 4px;
+    }
+    .answer {
+        color: #27ae60;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+    .hidden {
+        display: none;
+    }
+    input[type="number"] {
+        width: 60px;
+        padding: 5px;
+        margin-left: 10px;
+    }
+    .correct {
+        color: green;
+    }
+    .incorrect {
+        color: red;
+    }
+    .detail-section {
+        margin-left: 20px;
+        padding: 10px;
+        border-left: 2px solid #3498db;
+    }
+</style></head><body>
+<div id="app" class="container">
+    <h1>Math Quiz Generator</h1>
+    
+    <div class="form-group">
+        <label>Number of Questions:</label>
+        <div class="radio-group">
+            <label class="radio-option" v-for="count in [10, 30, 50, 100]">
+                <input type="radio" v-model="questionCount" :value="count">
+                {{ count }}
+            </label>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Number Range:</label>
+        <div class="radio-group">
+            <label class="radio-option" v-for="(label, value) in numberRanges">
+                <input type="radio" v-model="numberRange" :value="parseInt(value)">
+                {{ label }}
+            </label>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Numbers in Question:</label>
+        <div class="radio-group">
+            <label class="radio-option" v-for="num in [2, 3, 4, 5]">
+                <input type="radio" v-model="numbersInQuestion" :value="num">
+                {{ num }}
+            </label>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Question Types:</label>
+        <div class="checkbox-group">
+            <label class="checkbox-option" v-for="type in questionTypes">
+                <input type="checkbox" v-model="selectedQuestionTypes" :value="type">
+                {{ type }}
+            </label>
+        </div>
+    </div>
+    
+    <div v-if="selectedQuestionTypes.includes('Addition')" class="detail-section">
+        <label>Addition - Carry:</label>
+        <div class="radio-group">
+            <label class="radio-option">
+                <input type="radio" v-model="additionCarry" :value="true">
+                Yes
+            </label>
+            <label class="radio-option">
+                <input type="radio" v-model="additionCarry" :value="false">
+                No
+            </label>
+        </div>
+    </div>
+    
+    <div v-if="selectedQuestionTypes.includes('Subtraction')" class="detail-section">
+        <label>Subtraction - Retreat:</label>
+        <div class="radio-group">
+            <label class="radio-option">
+                <input type="radio" v-model="subtractionRetreat" :value="true">
+                Yes
+            </label>
+            <label class="radio-option">
+                <input type="radio" v-model="subtractionRetreat" :value="false">
+                No
+            </label>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Fill-in Question:</label>
+        <div class="radio-group">
+            <label class="radio-option">
+                <input type="radio" v-model="fillInQuestion" :value="true">
+                Yes
+            </label>
+            <label class="radio-option">
+                <input type="radio" v-model="fillInQuestion" :value="false">
+                No
+            </label>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label>Negative Number Result:</label>
+        <div class="radio-group">
+            <label class="radio-option">
+                <input type="radio" v-model="negativeNumberResult" :value="true">
+                Yes
+            </label>
+            <label class="radio-option">
+                <input type="radio" v-model="negativeNumberResult" :value="false">
+                No
+            </label>
+        </div>
+    </div>
+    
+    <button @click="generateQuiz">Generate Quiz</button>
+    
+    <div v-if="quiz.length > 0" class="quiz">
+        <div v-for="(question, index) in quiz" :key="index" class="question">
+            <div>{{ index + 1 }}. {{ question.questionText }}</div>
+            <input type="number" v-model="question.userAnswer">
+        </div>
+        <button @click="checkResults">Check Results</button>
+        <button @click="exportCSV">Export to CSV</button>
+        <div v-if="quizChecked">
+            <h2>Results:</h2>
+            <p>Score: {{ score }} / {{ quiz.length }}</p>
+            <div v-for="(question, index) in quiz" :key="index">
+                <span :class="question.isCorrect ? 'correct' : 'incorrect'">
+                    Question {{ index + 1 }}: {{ question.isCorrect ? 'Correct' : 'Incorrect' }}
+                </span>
+                <span v-if="!question.isCorrect"> (Correct answer: {{ question.answer }})</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+new Vue({
+    el: '#app',
+    data: {
+        questionCount: 10,
+        numberRange: 10,
+        numbersInQuestion: 2,
+        selectedQuestionTypes: ['Addition'],
+        fillInQuestion: false,
+        negativeNumberResult: false,
+        quiz: [],
+        quizChecked: false,
+        score: 0,
+        numberRanges: {
+            10: '1-10',
+            20: '≤20',
+            50: '≤50',
+            100: '≤100',
+            1000: '≤1000',
+            10000: '≤10000'
+        },
+        questionTypes: ['Addition', 'Subtraction', 'Multiplication', 'Division'],
+        additionCarry: false,
+        subtractionRetreat: false
+    },
+    methods: {
+        generateQuiz() {
+            if (this.selectedQuestionTypes.length === 0) {
+                alert("Please select at least one question type.");
+                return;
+            }
+            this.quiz = [];
+            let questionSet = new Set();
+            while (this.quiz.length < this.questionCount) {
+                let questionType = this.selectedQuestionTypes[Math.floor(Math.random() * this.selectedQuestionTypes.length)];
+                let question, answer, questionText;
+                switch (questionType) {
+                    case 'Addition':
+                        [question, answer, questionText] = this.generateAdditionQuestion();
+                        break;
+                    case 'Subtraction':
+                        [question, answer, questionText] = this.generateSubtractionQuestion();
+                        break;
+                    case 'Multiplication':
+                        [question, answer, questionText] = this.generateMultiplicationQuestion();
+                        break;
+                    case 'Division':
+                        [question, answer, questionText] = this.generateDivisionQuestion();
+                        break;
+                }
+                if (!questionSet.has(question) && this.isValidQuestion(question, questionType, answer)) {
+                    questionSet.add(question);
+                    this.quiz.push({ questionText, answer, userAnswer: null });
+                }
+            }
+            this.quizChecked = false;
+        },
+        generateAdditionQuestion() {
+            let numbers = [];
+            let hasCarry = false;
+            let attempts = 0;
+            const maxAttempts = 20;
+
+            do {
+                numbers = this.generateNumbers();
+                hasCarry = this.checkCarry(numbers);
+                attempts++;
+            } while ((this.additionCarry !== hasCarry) && attempts < maxAttempts);
+
+            if (attempts >= maxAttempts) {
+                console.log("Couldn't generate addition question with desired carry property after " + maxAttempts + " attempts.");
+            }
+
+            let answer = numbers.reduce((a, b) => a + b, 0);
+            let questionText, question;
+            if (this.fillInQuestion) {
+                let unknownIndex = Math.floor(Math.random() * numbers.length);
+                let unknownValue = numbers[unknownIndex];
+                numbers[unknownIndex] = '?';
+                questionText = numbers.join(' + ') + ' = ' + answer;
+                question = questionText.replace('?', unknownValue);
+                answer = unknownValue;
+            } else {
+                questionText = numbers.join(' + ') + ' = ?';
+                question = questionText;
+            }
+            return [question, answer, questionText];
+        },
+        generateSubtractionQuestion() {
+            let numbers = [];
+            let hasRetreat = false;
+            let result;
+            let attempts = 0;
+            const maxAttempts = 20;
+
+            do {
+                numbers = this.generateNumbers().sort((a, b) => b - a);
+                result = numbers.reduce((a, b) => a - b);
+                hasRetreat = this.checkRetreat(numbers);
+                attempts++;
+            } while (
+                ((this.subtractionRetreat !== hasRetreat) ||
+                (!this.negativeNumberResult && result < 0)) &&
+                attempts < maxAttempts
+            );
+
+            if (attempts >= maxAttempts) {
+                console.log("Couldn't generate subtraction question with desired properties after " + maxAttempts + " attempts.");
+            }
+			
+			
+            let questionText, question;
+            if (this.fillInQuestion) {
+				let answer = numbers.reduce((a, b) => a - b);
+                let unknownIndex = Math.floor(Math.random() * numbers.length);
+                let unknownValue = numbers[unknownIndex];
+                //let rightSide = unknownIndex === 0 ? numbers.slice(1).reduce((a, b) => a - b, 0) : result;
+                numbers[unknownIndex] = '?';
+                questionText = numbers.join(' - ') + ' = ' + answer;
+                question = questionText.replace('?', unknownValue);
+                result = unknownValue;
+            } else {
+                questionText = numbers.join(' - ') + ' = ?';
+                question = questionText;
+            }
+            return [question, result, questionText];
+        },
+        generateMultiplicationQuestion() {
+            let numbers = this.generateNumbers();
+            let answer = numbers.reduce((a, b) => a * b, 1);
+            let questionText, question;
+            if (this.fillInQuestion) {
+                let unknownIndex = Math.floor(Math.random() * numbers.length);
+                let unknownValue = numbers[unknownIndex];
+                numbers[unknownIndex] = '?';
+                questionText = numbers.join(' × ') + ' = ' + answer;
+                question = questionText.replace('?', unknownValue);
+                answer = unknownValue;
+            } else {
+                questionText = numbers.join(' × ') + ' = ?';
+                question = questionText;
+            }
+            return [question, answer, questionText];
+        },
+        generateDivisionQuestion() {
+            let divisor, quotient, dividend;
+            do {
+                divisor = Math.floor(Math.random() * (this.numberRange - 2)) + 2;
+                quotient = Math.floor(Math.random() * (this.numberRange / divisor)) + 2;
+                dividend = divisor * quotient;
+            } while (divisor === quotient); // Avoid questions like 3 / 3
+
+            let questionText, question, answer;
+            if (this.fillInQuestion) {
+                let isUnknownDivisor = Math.random() < 0.5;
+                if (isUnknownDivisor) {
+                    questionText = `${dividend} ÷ ? = ${quotient}`;
+                    question = questionText.replace('?', divisor);
+                    answer = divisor;
+                } else {
+                    questionText = `${dividend} ÷ ${divisor} = ?`;
+                    question = questionText;
+                    answer = quotient;
+                }
+            } else {
+                questionText = `${dividend} ÷ ${divisor} = ?`;
+                question = questionText;
+                answer = quotient;
+            }
+            return [question, answer, questionText];
+        },
+        generateNumbers() {
+            let numbers = [];
+            for (let i = 0; i < this.numbersInQuestion; i++) {
+                numbers.push(Math.floor(Math.random() * (this.numberRange - 1)) + 1);
+            }
+            return numbers;
+        },
+        checkCarry(numbers) {
+            let carry = 0;
+            for (let i = 0; i < Math.max(...numbers).toString().length; i++) {
+                let sum = carry;
+                for (let num of numbers) {
+                    sum += Math.floor(num / Math.pow(10, i)) % 10;
+                }
+                if (sum >= 10) return true;
+                carry = Math.floor(sum / 10);
+            }
+            return false;
+        },
+        checkRetreat(numbers) {
+            let borrow = false;
+            for (let i = 0; i < numbers[0].toString().length; i++) {
+                let digit = Math.floor(numbers[0] / Math.pow(10, i)) % 10;
+                for (let j = 1; j < numbers.length; j++) {
+                    let subtrahendDigit = Math.floor(numbers[j] / Math.pow(10, i)) % 10;
+                    if (digit < subtrahendDigit) {
+                        borrow = true;
+                        break;
+                    }
+                    digit -= subtrahendDigit;
+                }
+                if (borrow) break;
+            }
+            return borrow;
+        },
+        isValidQuestion(question, type, answer) {
+            const parts = question.split(/[\+\-\×\÷]/);
+            const uniqueNumbers = new Set(parts.map(part => part.trim()).filter(part => !isNaN(part)));
+            
+            // Check if all numbers in the question are different
+            if (uniqueNumbers.size !== parts.length - 1) {
+                return false;
+            }
+
+            // Check for negative number result
+            if (!this.negativeNumberResult && answer < 0) {
+                return false;
+            }
+
+            // Additional checks for specific question types
+            if (type === 'Subtraction' || type === 'Division') {
+                const numbers = parts.map(part => parseInt(part.trim())).filter(num => !isNaN(num));
+                if (numbers[0] === numbers[1]) {
+                    return false; // Avoid questions like 6 - 6 or 6 / 6
+                }
+            }
+
+            return true;
+        },
+        checkResults() {
+            this.score = 0;
+            this.quiz.forEach(question => {
+                question.isCorrect = parseInt(question.userAnswer) === question.answer;
+                if (question.isCorrect) this.score++;
+            });
+            this.quizChecked = true;
+        },
+        exportCSV() {
+            let csvContent = "Question,Correct Answer,User Answer\n";
+            this.quiz.forEach(question => {
+                csvContent += `"${question.questionText}",${question.answer},${question.userAnswer}\n`;
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "math_quiz.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+    }
+});
+</script>
+</body></html>
